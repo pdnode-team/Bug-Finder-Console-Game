@@ -31,7 +31,7 @@ fn main() -> io::Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let map = Map::from_strings(&[
+    let mut map = Map::from_strings(&[
         "####################",
         "#..................#",
         "#..................#",
@@ -244,7 +244,9 @@ fn main() -> io::Result<()> {
             }
         }
 
-        if npcs[0].talked {}
+        if npcs[0].talked {
+            map.set_tile(12, 5, '.')
+        }
     }
 
     disable_raw_mode()?;
