@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .npc import Npc
 
+import re
+
+TAG_RE = re.compile(r"\[/?[^\]]+\]")
+
 class GameMap:
     def __init__(self, lines: list[str]) -> None:
         self.tiles: list[list[str]] = [list(row) for row in lines]
@@ -14,7 +18,8 @@ class GameMap:
     def is_walkable(self, x: int, y: int) -> bool:
         if not (0 <= y < self.height and 0 <= x < self.width):
             return False
-        return self.tiles[y][x] == "."
+        clean_char = TAG_RE.sub("", self.tiles[y][x])
+        return clean_char == "."
 
     def set_tile(self, x: int, y: int, ch: str) -> None:
         if 0 <= y < self.height and 0 <= x < self.width:
