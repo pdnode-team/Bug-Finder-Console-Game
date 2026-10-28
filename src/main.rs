@@ -5,7 +5,7 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
-use engine::{Map, Npc, Player};
+use engine::{Map, MapEvent, Npc, Player};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -76,21 +76,30 @@ fn main() -> io::Result<()> {
 
     let mut last_move = Instant::now();
     let mut last_action = Instant::now();
+    let mut last_frame = Instant::now();
+    let mut farewell_sent = false;
     let move_cooldown = Duration::from_millis(180);
     let action_cooldown = Duration::from_millis(200);
 
     loop {
+        let dt = last_frame.elapsed();
+        last_frame = Instant::now();
+        map.tick(dt);
+        let (x, y) = (npcs[0].x, npcs[0].y);
+        if farewell_sent && y < map.height && x < map.width && map.tiles[y][x].color == Color::Red {
+            npcs[0].present = false;
+        }
+
         terminal.draw(|frame| {
             let area = frame.area();
 
             let display = map.render(&player, &npcs);
-            let map_paragraph = Paragraph::new(display)
-                .block(
-                    Block::default()
-                        .title("BugFinder | WASD(Move)  E(Talk)  Space(Continue)  q(Exit)")
-                        .borders(Borders::ALL),
-                )
-                .style(Style::default().fg(Color::White));
+            let map_paragraph = Paragraph::new(display).block(
+                Block::default()
+                    .title("BugFinder | WASD(Move)  E(Talk)  Space(Continue)  q(Exit)")
+                    .borders(Borders::ALL)
+                    .style(Style::default().fg(Color::White)),
+            );
 
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -128,7 +137,9 @@ fn main() -> io::Result<()> {
                     .wrap(Wrap { trim: true });
                 frame.render_widget(dialog, chunks[1]);
             } else {
-                let near = npcs.iter().any(|n| n.is_adjacent(player.x, player.y));
+                let near = npcs
+                    .iter()
+                    .any(|n| n.present && !n.talked && n.is_adjacent(player.x, player.y));
                 let hint = if near {
                     "Press E to Talk"
                 } else {
@@ -151,11 +162,11 @@ fn main() -> io::Result<()> {
                     KeyCode::Char('q') => break,
 
                     KeyCode::Char('e') | KeyCode::Char('E')
-                        if can_action && talking_to.is_none() =>
+                        if can_action && talking_to.is_none() && !map.is_busy() =>
                     {
-                        if let Some(idx) =
-                            npcs.iter().position(|n| n.is_adjacent(player.x, player.y))
-                        {
+                        if let Some(idx) = npcs.iter().position(|n| {
+                            n.present && !n.talked && n.is_adjacent(player.x, player.y)
+                        }) {
                             talking_to = Some(idx);
                             npcs[idx].reset();
                             talk_phase = TalkPhase::Lines;
@@ -206,7 +217,9 @@ fn main() -> io::Result<()> {
                         }
                     }
 
-                    KeyCode::Char('w') | KeyCode::Up if can_move && talking_to.is_none() => {
+                    KeyCode::Char('w') | KeyCode::Up
+                        if can_move && talking_to.is_none() && !map.is_busy() =>
+                    {
                         if player.try_move(0, -1, &map) {
                             last_move = Instant::now();
                         }
@@ -214,7 +227,9 @@ fn main() -> io::Result<()> {
                             let _ = event::read();
                         }
                     }
-                    KeyCode::Char('s') | KeyCode::Down if can_move && talking_to.is_none() => {
+                    KeyCode::Char('s') | KeyCode::Down
+                        if can_move && talking_to.is_none() && !map.is_busy() =>
+                    {
                         if player.try_move(0, 1, &map) {
                             last_move = Instant::now();
                         }
@@ -222,7 +237,9 @@ fn main() -> io::Result<()> {
                             let _ = event::read();
                         }
                     }
-                    KeyCode::Char('a') | KeyCode::Left if can_move && talking_to.is_none() => {
+                    KeyCode::Char('a') | KeyCode::Left
+                        if can_move && talking_to.is_none() && !map.is_busy() =>
+                    {
                         if player.try_move(-1, 0, &map) {
                             last_move = Instant::now();
                         }
@@ -230,7 +247,9 @@ fn main() -> io::Result<()> {
                             let _ = event::read();
                         }
                     }
-                    KeyCode::Char('d') | KeyCode::Right if can_move && talking_to.is_none() => {
+                    KeyCode::Char('d') | KeyCode::Right
+                        if can_move && talking_to.is_none() && !map.is_busy() =>
+                    {
                         if player.try_move(1, 0, &map) {
                             last_move = Instant::now();
                         }
@@ -244,8 +263,15 @@ fn main() -> io::Result<()> {
             }
         }
 
-        if npcs[0].talked {
-            map.set_tile(12, 5, '.')
+        if npcs[0].talked && !farewell_sent {
+            farewell_sent = true;
+            let (x, y) = (npcs[0].x, npcs[0].y);
+            map.play([
+                MapEvent::pause(2000),
+                MapEvent::set(x, y, '.', Color::Red),
+                MapEvent::pause(1500),
+                MapEvent::set(x, y, '.', Color::White),
+            ]);
         }
     }
 

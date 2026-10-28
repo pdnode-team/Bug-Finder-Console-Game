@@ -7,6 +7,7 @@ pub struct Npc {
     pub dialog_index: usize,
     pub choices: Vec<Choice>,
     pub talked: bool,
+    pub present: bool,
 }
 
 #[derive(Clone)]
@@ -25,6 +26,7 @@ impl Npc {
             dialog_index: 0,
             choices: Vec::new(),
             talked: false,
+            present: true,
         }
     }
 
