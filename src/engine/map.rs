@@ -1,0 +1,46 @@
+use super::npc::Npc;
+use super::player::Player;
+
+#[derive(Clone)]
+pub struct Map {
+    pub tiles: Vec<Vec<char>>,
+    pub width: usize,
+    pub height: usize,
+}
+
+impl Map {
+    pub fn from_strings(lines: &[&str]) -> Self {
+        let tiles: Vec<Vec<char>> = lines.iter().map(|l| l.chars().collect()).collect();
+        let height = tiles.len();
+        let width = tiles.first().map(|r| r.len()).unwrap_or(0);
+        Self {
+            tiles,
+            width,
+            height,
+        }
+    }
+
+    pub fn is_walkable(&self, x: usize, y: usize) -> bool {
+        if y >= self.height || x >= self.width {
+            return false;
+        }
+        self.tiles[y][x] == '.'
+    }
+
+    pub fn render(&self, player: &Player, npcs: &[Npc]) -> String {
+        let mut out = String::new();
+        for (y, row) in self.tiles.iter().enumerate() {
+            for (x, &ch) in row.iter().enumerate() {
+                if x == player.x && y == player.y {
+                    out.push('@');
+                } else if let Some(npc) = npcs.iter().find(|n| n.x == x && n.y == y) {
+                    out.push(npc.symbol);
+                } else {
+                    out.push(ch);
+                }
+            }
+            out.push('\n');
+        }
+        out
+    }
+}

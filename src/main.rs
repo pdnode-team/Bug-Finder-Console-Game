@@ -1,8 +1,11 @@
+mod engine;
+
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
+use engine::{Map, Npc, Player};
 use ratatui::{
     Terminal,
     backend::CrosstermBackend,
@@ -20,18 +23,7 @@ fn main() -> io::Result<()> {
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut player_x = 2;
-    let mut player_y = 2;
-    let npc_x = 12;
-    let npc_y = 5;
-
-    let mut show_dialog = false;
-    let mut last_move = Instant::now();
-    let mut last_action = Instant::now();
-    let move_cooldown = Duration::from_millis(180);
-    let action_cooldown = Duration::from_millis(200);
-
-    let map = vec![
+    let map = Map::from_strings(&[
         "####################",
         "#..................#",
         "#..................#",
@@ -42,44 +34,59 @@ fn main() -> io::Result<()> {
         "#..................#",
         "#..................#",
         "####################",
-    ];
+    ]);
+
+    let mut npcs = vec![Npc::new(
+        'H',
+        12,
+        5,
+        vec![
+            "Hello!",
+            "Welcome to ██████",
+            "This place is very old and fragile",
+            "If you want to escape...",
+            "You can look for bugs and reduce \"system stability\"",
+            "Remember, the lower the system stability, the greater the danger you're in",
+            "Oh no",
+            "NOOOOOOOO",
+            "███ is coming!",
+            "Don't get caught by ███!",
+            "Hurry to that door!!!",
+            ".............",
+        ],
+    )];
+
+    let mut player = Player { x: 2, y: 2 };
+    let mut talking_to: Option<usize> = None;
+
+    let mut last_move = Instant::now();
+    let mut last_action = Instant::now();
+    let move_cooldown = Duration::from_millis(180);
+    let action_cooldown = Duration::from_millis(200);
 
     loop {
         terminal.draw(|frame| {
             let area = frame.area();
 
-            // Map
-            let mut display = String::new();
-            for (y, line) in map.iter().enumerate() {
-                for (x, ch) in line.chars().enumerate() {
-                    if x == player_x && y == player_y {
-                        display.push('@');
-                    } else {
-                        display.push(ch);
-                    }
-                }
-                display.push('\n');
-            }
-
+            let display = map.render(&player, &npcs);
             let map_paragraph = Paragraph::new(display)
                 .block(
                     Block::default()
-                        .title("BugFinder | Press q to exit")
+                        .title("BugFinder | WASD(Move)  E(Talk)  Space(Continue)  q(Exit)")
                         .borders(Borders::ALL),
                 )
                 .style(Style::default().fg(Color::White));
 
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Min(5), Constraint::Length(4)])
+                .constraints([Constraint::Min(5), Constraint::Length(5)])
                 .split(area);
 
             frame.render_widget(map_paragraph, chunks[0]);
 
-            // Talk Window
-            if show_dialog {
+            if let Some(idx) = talking_to {
                 frame.render_widget(Clear, chunks[1]);
-                let dialog = Paragraph::new("Hello")
+                let dialog = Paragraph::new(npcs[idx].current_line())
                     .block(
                         Block::default()
                             .title("Talk")
@@ -89,19 +96,12 @@ fn main() -> io::Result<()> {
                     .wrap(Wrap { trim: true });
                 frame.render_widget(dialog, chunks[1]);
             } else {
-                // Tips & Talk
-                let near_npc = {
-                    let dx = (player_x as i32 - npc_x as i32).abs();
-                    let dy = (player_y as i32 - npc_y as i32).abs();
-                    dx <= 1 && dy <= 1 && !(dx == 0 && dy == 0)
-                };
-
-                let hint = if near_npc {
-                    "Press E to talk"
+                let near = npcs.iter().any(|n| n.is_adjacent(player.x, player.y));
+                let hint = if near {
+                    "Press E to Talk"
                 } else {
-                    "Task: speak with the mysterious person."
+                    "Talk with NPC"
                 };
-
                 let hint_widget = Paragraph::new(hint)
                     .block(Block::default().borders(Borders::ALL).title("Tips"))
                     .style(Style::default().fg(Color::DarkGray));
@@ -109,7 +109,6 @@ fn main() -> io::Result<()> {
             }
         })?;
 
-        // Input
         if event::poll(Duration::from_millis(50))? {
             if let Event::Key(key) = event::read()? {
                 let can_move = last_move.elapsed() >= move_cooldown;
@@ -118,53 +117,53 @@ fn main() -> io::Result<()> {
                 match key.code {
                     KeyCode::Char('q') => break,
 
-                    // Talk
-                    KeyCode::Char('e') | KeyCode::Char('E') if can_action && !show_dialog => {
-                        let dx = (player_x as i32 - npc_x as i32).abs();
-                        let dy = (player_y as i32 - npc_y as i32).abs();
-                        if dx <= 1 && dy <= 1 && !(dx == 0 && dy == 0) {
-                            show_dialog = true;
+                    KeyCode::Char('e') | KeyCode::Char('E')
+                        if can_action && talking_to.is_none() =>
+                    {
+                        if let Some(idx) =
+                            npcs.iter().position(|n| n.is_adjacent(player.x, player.y))
+                        {
+                            talking_to = Some(idx);
+                            npcs[idx].reset();
                             last_action = Instant::now();
                         }
                     }
 
-                    // Space
-                    KeyCode::Char(' ') | KeyCode::Esc if show_dialog && can_action => {
-                        show_dialog = false;
-                        last_action = Instant::now();
+                    KeyCode::Char(' ') | KeyCode::Esc if can_action => {
+                        if let Some(idx) = talking_to {
+                            if !npcs[idx].advance() {
+                                talking_to = None;
+                            }
+                            last_action = Instant::now();
+                        }
                     }
 
-                    // Move
-                    KeyCode::Char('w') | KeyCode::Up if can_move && !show_dialog => {
-                        if player_y > 1 {
-                            player_y -= 1;
+                    KeyCode::Char('w') | KeyCode::Up if can_move && talking_to.is_none() => {
+                        if player.try_move(0, -1, &map) {
                             last_move = Instant::now();
                         }
                         while event::poll(Duration::from_millis(0))? {
                             let _ = event::read();
                         }
                     }
-                    KeyCode::Char('s') | KeyCode::Down if can_move && !show_dialog => {
-                        if player_y < map.len() - 2 {
-                            player_y += 1;
+                    KeyCode::Char('s') | KeyCode::Down if can_move && talking_to.is_none() => {
+                        if player.try_move(0, 1, &map) {
                             last_move = Instant::now();
                         }
                         while event::poll(Duration::from_millis(0))? {
                             let _ = event::read();
                         }
                     }
-                    KeyCode::Char('a') | KeyCode::Left if can_move && !show_dialog => {
-                        if player_x > 1 {
-                            player_x -= 1;
+                    KeyCode::Char('a') | KeyCode::Left if can_move && talking_to.is_none() => {
+                        if player.try_move(-1, 0, &map) {
                             last_move = Instant::now();
                         }
                         while event::poll(Duration::from_millis(0))? {
                             let _ = event::read();
                         }
                     }
-                    KeyCode::Char('d') | KeyCode::Right if can_move && !show_dialog => {
-                        if player_x < map[0].len() - 2 {
-                            player_x += 1;
+                    KeyCode::Char('d') | KeyCode::Right if can_move && talking_to.is_none() => {
+                        if player.try_move(1, 0, &map) {
                             last_move = Instant::now();
                         }
                         while event::poll(Duration::from_millis(0))? {
