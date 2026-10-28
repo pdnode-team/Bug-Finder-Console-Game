@@ -16,6 +16,14 @@ use ratatui::{
 use std::io;
 use std::time::{Duration, Instant};
 
+// Yepp!
+#[derive(Clone, Copy)]
+enum TalkPhase {
+    Lines,
+    Choosing,
+    Reply(usize),
+}
+
 fn main() -> io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -36,28 +44,35 @@ fn main() -> io::Result<()> {
         "####################",
     ]);
 
-    let mut npcs = vec![Npc::new(
-        'H',
-        12,
-        5,
-        vec![
-            "Hello!",
-            "Welcome to ██████",
-            "This place is very old and fragile",
-            "If you want to escape...",
-            "You can look for bugs and reduce \"system stability\"",
-            "Remember, the lower the system stability, the greater the danger you're in",
-            "Oh no",
-            "NOOOOOOOO",
-            "███ is coming!",
-            "Don't get caught by ███!",
-            "Hurry to that door!!!",
-            ".............",
-        ],
-    )];
+    let mut npcs = vec![
+        Npc::new(
+            'H',
+            12,
+            5,
+            vec![
+                "Hello!",
+                "Welcome to ██████",
+                "This place is very old and fragile",
+                "If you want to escape...",
+                "You can look for bugs and reduce \"system stability\"",
+                "Remember, the lower the system stability, the greater the danger you're in",
+                "Oh no",
+                "NOOOOOOOO",
+                "███ is coming!",
+                "Don't get caught by ███!",
+                "Hurry to that door!!!",
+                ".............",
+            ],
+        )
+        .with_choices(vec![
+            ("Who is ███?", "What ███?"),
+            ("Why I'm here?", "JUST GO! Otherwise, it’ll be too late!"),
+        ]),
+    ];
 
     let mut player = Player { x: 2, y: 2 };
     let mut talking_to: Option<usize> = None;
+    let mut talk_phase = TalkPhase::Lines;
 
     let mut last_move = Instant::now();
     let mut last_action = Instant::now();
@@ -79,14 +94,31 @@ fn main() -> io::Result<()> {
 
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
-                .constraints([Constraint::Min(5), Constraint::Length(5)])
+                .constraints([Constraint::Min(5), Constraint::Length(8)])
                 .split(area);
 
             frame.render_widget(map_paragraph, chunks[0]);
 
             if let Some(idx) = talking_to {
                 frame.render_widget(Clear, chunks[1]);
-                let dialog = Paragraph::new(npcs[idx].current_line())
+
+                let text = match talk_phase {
+                    TalkPhase::Lines => npcs[idx].current_line().to_string(),
+                    TalkPhase::Choosing => {
+                        let mut text = String::from("Choose:\n");
+                        for (i, choice) in npcs[idx].choices.iter().enumerate() {
+                            text.push_str(&format!("{}. {}\n", i + 1, choice.label));
+                        }
+                        text
+                    }
+                    TalkPhase::Reply(pick) => npcs[idx]
+                        .choices
+                        .get(pick)
+                        .map(|choice| choice.reply.clone())
+                        .unwrap_or_default(),
+                };
+
+                let dialog = Paragraph::new(text)
                     .block(
                         Block::default()
                             .title("Talk")
@@ -110,7 +142,8 @@ fn main() -> io::Result<()> {
         })?;
 
         if event::poll(Duration::from_millis(50))? {
-            if let Event::Key(key) = event::read()? {
+            let event = event::read()?;
+            if let Event::Key(key) = event {
                 let can_move = last_move.elapsed() >= move_cooldown;
                 let can_action = last_action.elapsed() >= action_cooldown;
 
@@ -125,16 +158,51 @@ fn main() -> io::Result<()> {
                         {
                             talking_to = Some(idx);
                             npcs[idx].reset();
+                            talk_phase = TalkPhase::Lines;
                             last_action = Instant::now();
                         }
                     }
 
-                    KeyCode::Char(' ') | KeyCode::Esc if can_action => {
+                    KeyCode::Char(' ') if can_action => {
                         if let Some(idx) = talking_to {
-                            if !npcs[idx].advance() {
-                                talking_to = None;
+                            match talk_phase {
+                                TalkPhase::Lines => {
+                                    if !npcs[idx].advance() {
+                                        if npcs[idx].choices.is_empty() {
+                                            talking_to = None;
+                                            npcs[idx].talked = true;
+                                        } else {
+                                            talk_phase = TalkPhase::Choosing;
+                                        }
+                                    }
+                                }
+                                TalkPhase::Reply(_) => {
+                                    talking_to = None;
+                                    talk_phase = TalkPhase::Lines;
+                                    npcs[idx].talked = true;
+                                }
+                                TalkPhase::Choosing => {}
                             }
                             last_action = Instant::now();
+                        }
+                    }
+
+                    KeyCode::Esc if can_action && talking_to.is_some() => {
+                        talking_to = None;
+                        talk_phase = TalkPhase::Lines;
+                        last_action = Instant::now();
+                    }
+
+                    KeyCode::Char('1') | KeyCode::Char('2') if can_action => {
+                        if let (Some(idx), TalkPhase::Choosing) = (talking_to, talk_phase) {
+                            let pick = match key.code {
+                                KeyCode::Char('1') => 0,
+                                _ => 1,
+                            };
+                            if pick < npcs[idx].choices.len() {
+                                talk_phase = TalkPhase::Reply(pick);
+                                last_action = Instant::now();
+                            }
                         }
                     }
 
@@ -175,6 +243,8 @@ fn main() -> io::Result<()> {
                 }
             }
         }
+
+        if npcs[0].talked {}
     }
 
     disable_raw_mode()?;

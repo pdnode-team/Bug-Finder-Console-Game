@@ -5,6 +5,14 @@ pub struct Npc {
     pub y: usize,
     pub dialog: Vec<String>,
     pub dialog_index: usize,
+    pub choices: Vec<Choice>,
+    pub talked: bool,
+}
+
+#[derive(Clone)]
+pub struct Choice {
+    pub label: String,
+    pub reply: String,
 }
 
 impl Npc {
@@ -15,6 +23,8 @@ impl Npc {
             y,
             dialog: dialog.into_iter().map(|s| s.to_string()).collect(),
             dialog_index: 0,
+            choices: Vec::new(),
+            talked: false,
         }
     }
 
@@ -42,5 +52,15 @@ impl Npc {
         let dx = (self.x as i32 - px as i32).abs();
         let dy = (self.y as i32 - py as i32).abs();
         dx <= 1 && dy <= 1 && !(dx == 0 && dy == 0)
+    }
+    pub fn with_choices(mut self, choices: Vec<(&str, &str)>) -> Self {
+        self.choices = choices
+            .into_iter()
+            .map(|(label, reply)| Choice {
+                label: label.to_string(),
+                reply: reply.to_string(),
+            })
+            .collect();
+        self
     }
 }
