@@ -34,18 +34,29 @@ class BugFinder(App[None]):
 
     def __init__(self) -> None:
         super().__init__()
-        self.game_map = GameMap([
-            "####################",
-            "#..................#",
-            "#..................#",
-            "#..................#",
-            "#..................#",
-            "#...........H......#",
-            "#..................#",
-            "#..................#",
-            "#..................#",
-            "####################",
-        ])
+        self.maps = {
+            "init_room": [
+                "####################",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#...........H......#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "####################",
+            ],
+            "room2": [
+                "##########",
+                "#........#",
+                "#........#",
+                "##########",
+            ],
+        }
+        self.current_map_name = "init_room"
+        self.game_map = GameMap(self.maps[self.current_map_name])
+
         self.player = Player(2, 2)
         self.npcs = [
             Npc(
@@ -100,6 +111,8 @@ class BugFinder(App[None]):
         if self.npcs and self.npcs[0].talked:
             self.game_map.set_tile(19, 5, "[green on green].[/]")
 
+        if self.player.x == 18 and self.player.y == 5 and self.current_map_name == "init_room":
+            self.switch_to("room2")
 
     def action_move_up(self) -> None:
         if self.talking_to is None:
@@ -168,6 +181,15 @@ class BugFinder(App[None]):
 
     async def action_quit(self) -> None:
         self.exit()
+
+    def switch_to(self, map_name: str, player_x: int = 2, player_y: int = 2) -> None:
+        if map_name in self.maps:
+            self.current_map_name = map_name
+            self.game_map = GameMap(self.maps[map_name])
+            self.player.x = player_x
+            self.player.y = player_y
+            self.talking_to = None
+            self.update_display()
 
 def main() -> None:
     BugFinder().run()
