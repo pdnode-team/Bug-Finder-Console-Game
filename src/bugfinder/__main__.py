@@ -41,7 +41,7 @@ class BugFinder(App[None]):
     def __init__(self) -> None:
         super().__init__()
         self.move_cooldown = False
-        self.move_delay = 0.12
+        self.move_delay = 0.06
         self.maps = {
             "init_room": [
                 "####################",
@@ -112,6 +112,8 @@ class BugFinder(App[None]):
 
         self.enemies: list[Enemy] = []
 
+        self.enemy_alert: str | None = None
+
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown
 
@@ -138,6 +140,11 @@ class BugFinder(App[None]):
         self.query_one("#map", Static).update(map_text)
 
         dialog = self.query_one("#dialog", Static)
+
+        if self.enemy_alert:
+            dialog.update(self.enemy_alert)
+            return
+
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
             if self.talk_phase == TalkPhase.LINES:
@@ -275,16 +282,24 @@ class BugFinder(App[None]):
             self.update_display()
 
     def _tick_enemies(self) -> None:
-        if self.talking_to is not None:
+        if self.talking_to is not None or self.enemy_alert:
             return
         for enemy in self.enemies:
             enemy.try_move(self.game_map)
-            if enemy.is_adjacent(self.player.x, self.player.y):
+            if enemy.is_adjacent(self.player.x, self.player.y) or (
+                enemy.x == self.player.x and enemy.y == self.player.y
+            ):
                 self._on_enemy_touch(enemy)
+                break
         self.update_display()
 
     def _on_enemy_touch(self, enemy: Enemy) -> None:
-        self.query_one("#dialog", Static).update("[red]Unauthorized Action![/]")
+        self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
+        self.set_timer(1.5, self._clear_enemy_alert)
+
+    def _clear_enemy_alert(self) -> None:
+        self.enemy_alert = None
+        self.update_display()
 
 
 def main() -> None:
