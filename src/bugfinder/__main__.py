@@ -1,14 +1,15 @@
 from __future__ import annotations
+
 from typing import ClassVar
 
 from textual.app import App, ComposeResult
-from textual.widgets import Static
-from textual.containers import Vertical
 from textual.binding import Binding
+from textual.containers import Vertical
+from textual.widgets import Static
 
 from .map import GameMap
+from .npc import Choice, Npc
 from .player import Player
-from .npc import Npc, Choice
 
 
 class TalkPhase:
@@ -51,10 +52,32 @@ class BugFinder(App[None]):
                 "####################",
             ],
             "room2": [
-                "##########",
-                "#........#",
-                "#........#",
-                "##########",
+                "#####################################",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#####################################",
             ],
         }
         self.current_map_name = "init_room"
@@ -99,9 +122,7 @@ class BugFinder(App[None]):
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
             if self.talk_phase == TalkPhase.LINES:
-                dialog.update(
-                    f"[yellow]{npc.current_line()}[/]\n\n[dim]Space to continue[/]"
-                )
+                dialog.update(f"{npc.current_line()}\n\n[dim]Space to continue[/]")
             elif self.talk_phase == TalkPhase.CHOOSING:
                 text = "Choose:\n" + "\n".join(
                     f"{i + 1}. {c.label}" for i, c in enumerate(npc.choices)
@@ -109,7 +130,7 @@ class BugFinder(App[None]):
                 dialog.update(text)
             elif self.talk_phase == TalkPhase.REPLY:
                 reply = npc.choices[self.reply_index].reply if npc.choices else ""
-                dialog.update(f"[yellow]{reply}[/]\n\n[dim]Space to close[/]")
+                dialog.update(f"{reply}\n\n[dim]Space to close[/]")
         else:
             near = any(n.is_adjacent(self.player.x, self.player.y) for n in self.npcs)
             if self.npcs and self.npcs[0].talked:
@@ -120,7 +141,7 @@ class BugFinder(App[None]):
                 dialog.update("[dim]Approach the NPC[/]")
 
         # talked
-        if self.npcs and self.npcs[0].talked:
+        if self.npcs and self.npcs[0].talked and self.current_map_name == "init_room":
             self.game_map.set_tile(19, 5, "[green on green].[/]")
 
         if (
@@ -205,6 +226,23 @@ class BugFinder(App[None]):
             self.player.x = player_x
             self.player.y = player_y
             self.talking_to = None
+
+            if map_name == "room2":
+                self.npcs = [
+                    Npc(
+                        "H",
+                        4,
+                        2,
+                        [
+                            "Hello!",
+                            "This is your first challenge.",
+                            'You need to go to the console [yellow]"C"[/] to exploit to reduce system stability',
+                            'Please watch out for the [red]"E"[/] along the way. It the safety system.',
+                            "Lets Go!",
+                        ],
+                    )
+                ]
+
             self.update_display()
 
 
