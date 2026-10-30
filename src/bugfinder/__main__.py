@@ -133,14 +133,13 @@ class BugFinder(App[None]):
         self.set_interval(0.6, self._tick_enemies)
 
     def update_display(self) -> None:
-        map_text = self.game_map.render(self.player.x, self.player.y, self.npcs)
+        entities = self.npcs + self.enemies
+        map_text = self.game_map.render(self.player.x, self.player.y, entities)
         self.query_one("#map", Static).update(map_text)
 
         dialog = self.query_one("#dialog", Static)
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
-            entities = self.npcs + self.enemies
-            map_text = self.game_map.render(self.player.x, self.player.y, entities)
             if self.talk_phase == TalkPhase.LINES:
                 dialog.update(f"{npc.current_line()}\n\n[dim]Space to continue[/]")
             elif self.talk_phase == TalkPhase.CHOOSING:
