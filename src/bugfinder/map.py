@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from .npc import Npc
+
 
 import re
 
 TAG_RE = re.compile(r"\[/?[^\]]+\]")
 
+
 class GameMap:
-    def __init__(self, lines: list[str]) -> None:
+    def __init__(self, lines: list[Any]) -> None:
         self.tiles: list[list[str]] = [list(row) for row in lines]
         self.height: int = len(self.tiles)
         self.width: int = len(self.tiles[0]) if self.tiles else 0
@@ -25,7 +27,7 @@ class GameMap:
         if 0 <= y < self.height and 0 <= x < self.width:
             self.tiles[y][x] = ch
 
-    def render(self, player_x: int, player_y: int, npcs: list[Npc]) -> str:
+    def render(self, player_x: int, player_y: int, npcs: list[Any]) -> str:
         lines: list[str] = []
         for y, row in enumerate(self.tiles):
             line_chars: list[str] = []

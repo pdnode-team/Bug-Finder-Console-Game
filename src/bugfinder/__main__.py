@@ -139,6 +139,8 @@ class BugFinder(App[None]):
         dialog = self.query_one("#dialog", Static)
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
+            entities = self.npcs + self.enemies
+            map_text = self.game_map.render(self.player.x, self.player.y, entities)
             if self.talk_phase == TalkPhase.LINES:
                 dialog.update(f"{npc.current_line()}\n\n[dim]Space to continue[/]")
             elif self.talk_phase == TalkPhase.CHOOSING:
