@@ -38,6 +38,8 @@ class BugFinder(App[None]):
 
     def __init__(self) -> None:
         super().__init__()
+        self.move_cooldown = False
+        self.move_delay = 0.12
         self.maps = {
             "init_room": [
                 "####################",
@@ -52,7 +54,7 @@ class BugFinder(App[None]):
                 "####################",
             ],
             "room2": [
-                "###################################&#",
+                "#####################################",
                 "#.......#...........................#",
                 "#.......#...........................#",
                 "#.......#...........................#",
@@ -106,6 +108,16 @@ class BugFinder(App[None]):
         self.talk_phase = TalkPhase.LINES
         self.reply_index = 0
 
+    def _can_move(self) -> bool:
+        return self.talking_to is None and not self.move_cooldown
+
+    def _start_cooldown(self) -> None:
+        self.move_cooldown = True
+        self.set_timer(self.move_delay, self._end_cooldown)
+
+    def _end_cooldown(self) -> None:
+        self.move_cooldown = False
+
     def compose(self) -> ComposeResult:
         with Vertical():
             yield Static(id="map")
@@ -152,24 +164,28 @@ class BugFinder(App[None]):
             self.switch_to("room2", 1, 2)
 
     def action_move_up(self) -> None:
-        if self.talking_to is None:
+        if self._can_move():
             self.player.try_move(0, -1, self.game_map)
             self.update_display()
+            self._start_cooldown()
 
     def action_move_down(self) -> None:
-        if self.talking_to is None:
+        if self._can_move():
             self.player.try_move(0, 1, self.game_map)
             self.update_display()
+            self._start_cooldown()
 
     def action_move_left(self) -> None:
-        if self.talking_to is None:
+        if self._can_move():
             self.player.try_move(-1, 0, self.game_map)
             self.update_display()
+            self._start_cooldown()
 
     def action_move_right(self) -> None:
-        if self.talking_to is None:
+        if self._can_move():
             self.player.try_move(1, 0, self.game_map)
             self.update_display()
+            self._start_cooldown()
 
     def action_talk(self) -> None:
         if self.talking_to is not None:
