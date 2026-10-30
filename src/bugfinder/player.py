@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 from .map import GameMap
+
 
 class Player:
     def __init__(self, x: int, y: int) -> None:
