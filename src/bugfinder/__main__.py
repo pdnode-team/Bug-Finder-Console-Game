@@ -7,6 +7,8 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.widgets import Static
 
+from bugfinder.enemy import Enemy
+
 from .map import GameMap
 from .npc import Choice, Npc
 from .player import Player
@@ -108,6 +110,8 @@ class BugFinder(App[None]):
         self.talk_phase = TalkPhase.LINES
         self.reply_index = 0
 
+        self.enemies: list[Enemy] = []
+
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown
 
@@ -125,6 +129,8 @@ class BugFinder(App[None]):
 
     def on_mount(self) -> None:
         self.update_display()
+
+        self.set_interval(0.6, self._tick_enemies)
 
     def update_display(self) -> None:
         map_text = self.game_map.render(self.player.x, self.player.y, self.npcs)
@@ -258,8 +264,26 @@ class BugFinder(App[None]):
                         ],
                     )
                 ]
+                self.enemies = [
+                    Enemy("E", 10, 5),
+                    Enemy("E", 15, 8),
+                ]
+        else:
+            self.enemies = []
 
             self.update_display()
+
+    def _tick_enemies(self) -> None:
+        if self.talking_to is not None:
+            return
+        for enemy in self.enemies:
+            enemy.try_move(self.game_map)
+            if enemy.is_adjacent(self.player.x, self.player.y):
+                self._on_enemy_touch(enemy)
+        self.update_display()
+
+    def _on_enemy_touch(self, enemy: Enemy) -> None:
+        self.query_one("#dialog", Static).update("[red]Unauthorized Action![/]")
 
 
 def main() -> None:
