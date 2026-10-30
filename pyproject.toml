@@ -7,7 +7,9 @@ authors = [
     { name = "BretRen", email = "bretren2013@gmail.com" }
 ]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "textual>=8.2.8",
+]
 
 [project.scripts]
 bugfinder = "bugfinder:main"
@@ -15,3 +17,4 @@ bugfinder = "bugfinder:main"
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
+

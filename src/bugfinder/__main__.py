@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import ClassVar
 
 from textual.app import App, ComposeResult
 from textual.widgets import Static
@@ -9,10 +10,12 @@ from .map import GameMap
 from .player import Player
 from .npc import Npc, Choice
 
+
 class TalkPhase:
     LINES = "lines"
     CHOOSING = "choosing"
     REPLY = "reply"
+
 
 class BugFinder(App[None]):
     CSS = """
@@ -20,7 +23,7 @@ class BugFinder(App[None]):
     #dialog { height: 8; border: solid gray; }
     """
 
-    BINDINGS = [
+    BINDINGS: ClassVar = [
         Binding("q", "quit", "Quit"),
         Binding("w", "move_up"),
         Binding("s", "move_down"),
@@ -60,7 +63,9 @@ class BugFinder(App[None]):
         self.player = Player(2, 2)
         self.npcs = [
             Npc(
-                "H", 12, 5,
+                "H",
+                12,
+                5,
                 [
                     "Hello!",
                     "Welcome to ██████",
@@ -94,25 +99,36 @@ class BugFinder(App[None]):
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
             if self.talk_phase == TalkPhase.LINES:
-                dialog.update(f"[yellow]{npc.current_line()}[/]\n\n[dim]Space to continue[/]")
+                dialog.update(
+                    f"[yellow]{npc.current_line()}[/]\n\n[dim]Space to continue[/]"
+                )
             elif self.talk_phase == TalkPhase.CHOOSING:
-                text = "Choose:\n" + "\n".join(f"{i+1}. {c.label}" for i, c in enumerate(npc.choices))
+                text = "Choose:\n" + "\n".join(
+                    f"{i + 1}. {c.label}" for i, c in enumerate(npc.choices)
+                )
                 dialog.update(text)
             elif self.talk_phase == TalkPhase.REPLY:
                 reply = npc.choices[self.reply_index].reply if npc.choices else ""
                 dialog.update(f"[yellow]{reply}[/]\n\n[dim]Space to close[/]")
         else:
             near = any(n.is_adjacent(self.player.x, self.player.y) for n in self.npcs)
-            if self.npcs and self.npcs[0].talked: dialog.update("[dim]Go to the exit[/]")
-            elif near: dialog.update("[dim]Press E to talk[/]")
-            else: dialog.update("[dim]Approach the NPC[/]")
+            if self.npcs and self.npcs[0].talked:
+                dialog.update("[dim]Go to the exit[/]")
+            elif near:
+                dialog.update("[dim]Press E to talk[/]")
+            else:
+                dialog.update("[dim]Approach the NPC[/]")
 
         # talked
         if self.npcs and self.npcs[0].talked:
             self.game_map.set_tile(19, 5, "[green on green].[/]")
 
-        if self.player.x == 18 and self.player.y == 5 and self.current_map_name == "init_room":
-            self.switch_to("room2")
+        if (
+            self.player.x == 18
+            and self.player.y == 5
+            and self.current_map_name == "init_room"
+        ):
+            self.switch_to("room2", 1, 2)
 
     def action_move_up(self) -> None:
         if self.talking_to is None:
@@ -191,8 +207,10 @@ class BugFinder(App[None]):
             self.talking_to = None
             self.update_display()
 
+
 def main() -> None:
     BugFinder().run()
+
 
 if __name__ == "__main__":
     main()
