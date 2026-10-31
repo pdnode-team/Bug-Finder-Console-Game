@@ -43,6 +43,9 @@ class StartScene(App):
             self.exit("start")
         elif event.button.id == "clear":
             self.query_one("#text", Static).update("Data cleared")
+            from bugfinder.gamesave import GameSave
+
+            GameSave("data.json").save({})
 
 
 if __name__ == "__main__":
