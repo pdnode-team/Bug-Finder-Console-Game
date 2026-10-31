@@ -222,28 +222,52 @@ class BugFinder(App[None]):
             self.switch_to("room2", 1, 2)
 
     def action_move_up(self) -> None:
-        if self._can_move():
+        if not self._can_move():
+            return
+        new_x = self.player.x
+        new_y = self.player.y - 1
+        if self.game_map.is_walkable(new_x, new_y) and not self._is_blocked_by_entity(
+            new_x, new_y
+        ):
             self.player.try_move(0, -1, self.game_map)
             self.update_display()
             self._start_cooldown()
             self._check_enemy_collision()
 
     def action_move_down(self) -> None:
-        if self._can_move():
+        if not self._can_move():
+            return
+        new_x = self.player.x
+        new_y = self.player.y + 1
+        if self.game_map.is_walkable(new_x, new_y) and not self._is_blocked_by_entity(
+            new_x, new_y
+        ):
             self.player.try_move(0, 1, self.game_map)
             self.update_display()
             self._start_cooldown()
             self._check_enemy_collision()
 
     def action_move_left(self) -> None:
-        if self._can_move():
+        if not self._can_move():
+            return
+        new_x = self.player.x - 1
+        new_y = self.player.y
+        if self.game_map.is_walkable(new_x, new_y) and not self._is_blocked_by_entity(
+            new_x, new_y
+        ):
             self.player.try_move(-1, 0, self.game_map)
             self.update_display()
             self._start_cooldown()
             self._check_enemy_collision()
 
     def action_move_right(self) -> None:
-        if self._can_move():
+        if not self._can_move():
+            return
+        new_x = self.player.x + 1
+        new_y = self.player.y
+        if self.game_map.is_walkable(new_x, new_y) and not self._is_blocked_by_entity(
+            new_x, new_y
+        ):
             self.player.try_move(1, 0, self.game_map)
             self.update_display()
             self._start_cooldown()
@@ -345,6 +369,15 @@ class BugFinder(App[None]):
     def _clear_enemy_alert(self) -> None:
         self.enemy_alert = None
         self.update_display()
+
+    def _is_blocked_by_entity(self, x: int, y: int) -> bool:
+        for npc in self.npcs:
+            if npc.x == x and npc.y == y:
+                return True
+        for enemy in self.enemies:
+            if enemy.x == x and enemy.y == y:
+                return True
+        return False
 
 
 def main() -> None:
