@@ -8,6 +8,7 @@ from textual.containers import Vertical
 from textual.widgets import Static
 
 from bugfinder.enemy import Enemy
+from bugfinder.start_ui import StartScene
 
 from .map import GameMap
 from .npc import Choice, Npc
@@ -298,10 +299,10 @@ class BugFinder(App[None]):
             return
         for enemy in self.enemies:
             if enemy.is_adjacent(self.player.x, self.player.y) or (
-                    enemy.x == self.player.x and enemy.y == self.player.y
-                ):
-                    self._on_enemy_touch(enemy)
-                    break
+                enemy.x == self.player.x and enemy.y == self.player.y
+            ):
+                self._on_enemy_touch(enemy)
+                break
 
     def _on_enemy_touch(self, enemy: Enemy) -> None:
         self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
@@ -313,7 +314,9 @@ class BugFinder(App[None]):
 
 
 def main() -> None:
-    BugFinder().run()
+    result = StartScene().run()
+    if result == "start":
+        BugFinder().run()
 
 
 if __name__ == "__main__":
