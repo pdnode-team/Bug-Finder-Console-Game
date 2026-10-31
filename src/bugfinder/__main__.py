@@ -46,7 +46,19 @@ npcs: dict[str, list[Npc]] = {
                 'Please watch out for the [red]"E"[/] along the way. It the safety system.',
                 "Lets Go!",
             ],
-        )
+        ),
+        Npc(
+            "[yellow]C[/]",
+            12,
+            4,
+            [
+                "Hello!",
+                "This is your first challenge.",
+                'You need to go to the console [yellow]"C"[/] to exploit to reduce system stability',
+                'Please watch out for the [red]"E"[/] along the way. It the safety system.',
+                "Lets Go!",
+            ],
+        ),
     ],
 }
 
@@ -180,7 +192,7 @@ class BugFinder(App[None]):
     def on_mount(self) -> None:
         self.update_display()
 
-        self.set_interval(0.6, self._tick_enemies)
+        self.set_interval(0.15, self._tick_enemies)
 
     def update_display(self) -> None:
         entities = self.npcs + self.enemies
