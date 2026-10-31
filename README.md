@@ -4,6 +4,7 @@ So this is my first time using Python to create a CLI game; my original plan was
 
 ## Plan
 - [ ] Save & Load
+- [ ] Refact the npc and enemy list 
 - [ ] Finish first level
 - [ ] Add more kind enemy
 - [ ] Automatic release in github

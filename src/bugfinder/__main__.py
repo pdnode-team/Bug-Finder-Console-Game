@@ -8,6 +8,7 @@ from textual.containers import Vertical
 from textual.widgets import Static
 
 from bugfinder.enemy import Enemy
+from bugfinder.gamesave import GameSave
 from bugfinder.start_ui import StartScene
 
 from .map import GameMap
@@ -114,6 +115,34 @@ class BugFinder(App[None]):
         self.enemies: list[Enemy] = []
 
         self.enemy_alert: str | None = None
+
+        self.saver = GameSave("data.json")
+        self.gamesave = self.saver.load()
+
+        if self.gamesave:
+            room = self.gamesave.get("room", "init_room")
+            px = self.gamesave.get("player_x", 2)
+            py = self.gamesave.get("player_y", 2)
+
+            if room in self.maps:
+                self.current_map_name = room
+                self.game_map = GameMap(self.maps[room])
+                self.player = Player(px, py)
+
+                # 如果是 room2，也要恢复 NPC 和敌人
+                if room == "room2":
+                    self.npcs = [
+                        Npc(
+                            "H",
+                            4,
+                            2,
+                            ["Hello!", "This is your first challenge.", "..."],
+                        )
+                    ]
+                    self.enemies = [
+                        Enemy("E", 10, 5),
+                        Enemy("E", 15, 8),
+                    ]
 
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown
@@ -261,6 +290,14 @@ class BugFinder(App[None]):
             self.player.x = player_x
             self.player.y = player_y
             self.talking_to = None
+
+            self.saver.save(
+                {
+                    "room": map_name,
+                    "player_x": player_x,
+                    "player_y": player_y,
+                }
+            )
 
             if map_name == "room2":
                 self.npcs = [
