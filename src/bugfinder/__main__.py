@@ -52,8 +52,8 @@ npcs: dict[str, list[Npc]] = {
 
 enemies: dict[str, list[Enemy]] = {
     "room2": [
-        Enemy("E", 10, 5),
-        Enemy("E", 15, 8),
+        Enemy("[bold red]E[/]", 10, 5),
+        Enemy("[bold red]E[/]", 15, 8),
     ],
 }
 

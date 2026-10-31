@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from .npc import Npc
-
-
 import re
+from typing import Any
 
 TAG_RE = re.compile(r"\[/?[^\]]+\]")
 
@@ -27,19 +22,20 @@ class GameMap:
         if 0 <= y < self.height and 0 <= x < self.width:
             self.tiles[y][x] = ch
 
-    def render(self, player_x: int, player_y: int, npcs: list[Any]) -> str:
+    def render(self, player_x: int, player_y: int, entities: list[Any]) -> str:
         lines: list[str] = []
         for y, row in enumerate(self.tiles):
             line_chars: list[str] = []
             for x, ch in enumerate(row):
                 if x == player_x and y == player_y:
-                    line_chars.append("@ ")
+                    line_chars.append("[bold cyan]@[/] ")
                 else:
-                    npc_here: Npc | None = next(
-                        (n for n in npcs if n.x == x and n.y == y), None
-                    )
-                    symbol = npc_here.symbol if npc_here else ch
-                    clean = TAG_RE.sub("", symbol)
-                    line_chars.append(clean[:1] + " ")
+                    entity = next((e for e in entities if e.x == x and e.y == y), None)
+                    if entity:
+                        symbol = getattr(entity, "symbol", "?")
+                        line_chars.append(f"{symbol} ")
+                    else:
+                        clean = TAG_RE.sub("", ch)
+                        line_chars.append(clean[:1] + " ")
             lines.append("".join(line_chars))
         return "\n".join(lines)
