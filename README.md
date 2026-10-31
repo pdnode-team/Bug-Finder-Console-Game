@@ -1,5 +1,14 @@
 # Bug Finder
-So this is my first 
+So this is my first time using Python to create a CLI game; my original plan was to use Rust, but it was too hard, so I switched to Python. You may find out in the Rust branch.
+
+
+## Plan
+- [ ] Save & Load
+- [ ] Finish first level
+- [ ] Add more kind enemy
+- [ ] Automatic release in github
+- [ ] Status Bar
+- [ ] Function Buttons
 
 ## Background
 You wake up, dazed, to find that you’ve been transported into a black-and-white console. You have a vague recollection of participating in Hack Club’s Terra project, but you have no idea how you ended up inside this unsightly console.
