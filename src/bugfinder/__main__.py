@@ -369,6 +369,8 @@ class BugFinder(App[None]):
     def _on_enemy_touch(self, enemy: Enemy) -> None:
         self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
         self.set_timer(1.5, self._clear_enemy_alert)
+        self.player.x = 1
+        self.player.y = 2
 
     def _clear_enemy_alert(self) -> None:
         self.enemy_alert = None
