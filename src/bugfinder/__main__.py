@@ -171,7 +171,7 @@ class BugFinder(App[None]):
             self.game_map.set_tile(19, 5, "[green on green].[/]")
 
         if (
-            self.player.x == 18
+            self.player.x == 19
             and self.player.y == 5
             and self.current_map_name == "init_room"
         ):

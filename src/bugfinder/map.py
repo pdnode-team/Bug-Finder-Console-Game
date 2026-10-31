@@ -33,11 +33,13 @@ class GameMap:
             line_chars: list[str] = []
             for x, ch in enumerate(row):
                 if x == player_x and y == player_y:
-                    line_chars.append("@")
+                    line_chars.append("@ ")
                 else:
                     npc_here: Npc | None = next(
                         (n for n in npcs if n.x == x and n.y == y), None
                     )
-                    line_chars.append(npc_here.symbol if npc_here else ch)
+                    symbol = npc_here.symbol if npc_here else ch
+                    clean = TAG_RE.sub("", symbol)
+                    line_chars.append(clean[:1] + " ")
             lines.append("".join(line_chars))
         return "\n".join(lines)
