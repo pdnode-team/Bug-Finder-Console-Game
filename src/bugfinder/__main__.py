@@ -182,24 +182,28 @@ class BugFinder(App[None]):
             self.player.try_move(0, -1, self.game_map)
             self.update_display()
             self._start_cooldown()
+            self._check_enemy_collision()
 
     def action_move_down(self) -> None:
         if self._can_move():
             self.player.try_move(0, 1, self.game_map)
             self.update_display()
             self._start_cooldown()
+            self._check_enemy_collision()
 
     def action_move_left(self) -> None:
         if self._can_move():
             self.player.try_move(-1, 0, self.game_map)
             self.update_display()
             self._start_cooldown()
+            self._check_enemy_collision()
 
     def action_move_right(self) -> None:
         if self._can_move():
             self.player.try_move(1, 0, self.game_map)
             self.update_display()
             self._start_cooldown()
+            self._check_enemy_collision()
 
     def action_talk(self) -> None:
         if self.talking_to is not None:
@@ -284,14 +288,20 @@ class BugFinder(App[None]):
     def _tick_enemies(self) -> None:
         if self.talking_to is not None or self.enemy_alert:
             return
+        self._check_enemy_collision()
         for enemy in self.enemies:
             enemy.try_move(self.game_map)
-            if enemy.is_adjacent(self.player.x, self.player.y) or (
-                enemy.x == self.player.x and enemy.y == self.player.y
-            ):
-                self._on_enemy_touch(enemy)
-                break
         self.update_display()
+
+    def _check_enemy_collision(self) -> None:
+        if self.enemy_alert:
+            return
+        for enemy in self.enemies:
+            if enemy.is_adjacent(self.player.x, self.player.y) or (
+                    enemy.x == self.player.x and enemy.y == self.player.y
+                ):
+                    self._on_enemy_touch(enemy)
+                    break
 
     def _on_enemy_touch(self, enemy: Enemy) -> None:
         self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
