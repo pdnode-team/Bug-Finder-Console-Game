@@ -1,4 +1,5 @@
 import json
+from os import path
 from typing import Any
 
 
@@ -11,5 +12,7 @@ class GameSave:
             json.dump(data, f, indent=2)
 
     def load(self) -> Any:
+        if not path.exists(self.filename):
+            return {}
         with open(self.filename, "r", encoding="utf-8") as f:
             return json.load(f)

@@ -15,6 +15,48 @@ from .map import GameMap
 from .npc import Choice, Npc
 from .player import Player
 
+npcs: dict[str, list[Npc]] = {
+    "init_room": [
+        Npc(
+            "H",
+            12,
+            5,
+            [
+                "Hello!",
+                "Welcome to ██████",
+                "This place is very old and fragile",
+                "If you want to escape...",
+                "You can look for bugs and reduce system stability",
+            ],
+            choices=[
+                Choice("Who is ███?", "I cannot tell you..."),
+                Choice("Why am I here?", "I have no idea..."),
+            ],
+        )
+    ],
+    "room2": [
+        Npc(
+            "H",
+            4,
+            2,
+            [
+                "Hello!",
+                "This is your first challenge.",
+                'You need to go to the console [yellow]"C"[/] to exploit to reduce system stability',
+                'Please watch out for the [red]"E"[/] along the way. It the safety system.',
+                "Lets Go!",
+            ],
+        )
+    ],
+}
+
+enemies: dict[str, list[Enemy]] = {
+    "room2": [
+        Enemy("E", 10, 5),
+        Enemy("E", 15, 8),
+    ],
+}
+
 
 class TalkPhase:
     LINES = "lines"
@@ -90,24 +132,7 @@ class BugFinder(App[None]):
         self.game_map = GameMap(self.maps[self.current_map_name])
 
         self.player = Player(2, 2)
-        self.npcs = [
-            Npc(
-                "H",
-                12,
-                5,
-                [
-                    "Hello!",
-                    "Welcome to ██████",
-                    "This place is very old and fragile",
-                    "If you want to escape...",
-                    "You can look for bugs and reduce system stability",
-                ],
-                choices=[
-                    Choice("Who is ███?", "I cannot tell you..."),
-                    Choice("Why am I here?", "I have no idea..."),
-                ],
-            )
-        ]
+        self.npcs = npcs["init_room"]
         self.talking_to: int | None = None
         self.talk_phase = TalkPhase.LINES
         self.reply_index = 0
@@ -129,20 +154,9 @@ class BugFinder(App[None]):
                 self.game_map = GameMap(self.maps[room])
                 self.player = Player(px, py)
 
-                # 如果是 room2，也要恢复 NPC 和敌人
                 if room == "room2":
-                    self.npcs = [
-                        Npc(
-                            "H",
-                            4,
-                            2,
-                            ["Hello!", "This is your first challenge.", "..."],
-                        )
-                    ]
-                    self.enemies = [
-                        Enemy("E", 10, 5),
-                        Enemy("E", 15, 8),
-                    ]
+                    self.npcs = npcs["room2"]
+                    self.enemies = enemies["room2"]
 
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown
@@ -299,25 +313,8 @@ class BugFinder(App[None]):
                 }
             )
 
-            if map_name == "room2":
-                self.npcs = [
-                    Npc(
-                        "H",
-                        4,
-                        2,
-                        [
-                            "Hello!",
-                            "This is your first challenge.",
-                            'You need to go to the console [yellow]"C"[/] to exploit to reduce system stability',
-                            'Please watch out for the [red]"E"[/] along the way. It the safety system.',
-                            "Lets Go!",
-                        ],
-                    )
-                ]
-                self.enemies = [
-                    Enemy("E", 10, 5),
-                    Enemy("E", 15, 8),
-                ]
+            self.npcs = npcs[map_name]
+            self.enemies = enemies[map_name]
         else:
             self.enemies = []
 
