@@ -5,9 +5,9 @@ So this is my first time using Python to create a CLI game; my original plan was
 ## Plan
 - [x] Save & Load
 - [x] Refact the npc and enemy list 
-- [ ] Finish first level
+- [x] Finish first level
     - [x] More enemy
-    - [ ] Finish C
+    - [x] Finish C
 - [ ] Add more kind enemy
 - [ ] Automatic release in github
 - [ ] Status Bar

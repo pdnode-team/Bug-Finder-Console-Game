@@ -16,7 +16,7 @@ class GameMap:
         if not (0 <= y < self.height and 0 <= x < self.width):
             return False
         clean_char = TAG_RE.sub("", self.tiles[y][x])
-        return clean_char == "."
+        return clean_char in (".", "=")
 
     def set_tile(self, x: int, y: int, ch: str) -> None:
         if 0 <= y < self.height and 0 <= x < self.width:
@@ -35,7 +35,10 @@ class GameMap:
                         symbol = getattr(entity, "symbol", "?")
                         line_chars.append(f"{symbol} ")
                     else:
-                        clean = TAG_RE.sub("", ch)
-                        line_chars.append(clean[:1] + " ")
+                        if ch.startswith("[") and "]" in ch:
+                            line_chars.append(ch + " ")
+                        else:
+                            clean = TAG_RE.sub("", ch)
+                            line_chars.append(clean[:1] + " ")
             lines.append("".join(line_chars))
         return "\n".join(lines)

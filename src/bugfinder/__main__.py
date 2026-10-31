@@ -51,12 +51,12 @@ npcs: dict[str, list[Npc]] = {
             "[yellow]C[/]",
             12,
             4,
-            [
-                "Hello!",
-                "This is your first challenge.",
-                'You need to go to the console [yellow]"C"[/] to exploit to reduce system stability',
-                'Please watch out for the [red]"E"[/] along the way. It the safety system.',
-                "Lets Go!",
+            ["Console: .....Loading.....", "terra@bugfinder:~$ █"],
+            choices=[
+                Choice(
+                    "sudo rm -rf /*",
+                    "terra@bugfinder:~$ sudo rm -rf /*\nSystem: You better run right now otherwise you will stay with me forever haha!",  # So old-fashion
+                )
             ],
         ),
     ],
@@ -174,6 +174,11 @@ class BugFinder(App[None]):
                     self.npcs = npcs["room2"]
                     self.enemies = enemies["room2"]
 
+        self.bug_tiles: list[tuple[int, int]] = []
+        self.bug_active = False
+        self.bug_spawn_interval = 1.2
+        self.bug_spawn_count = 0
+
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown
 
@@ -191,7 +196,7 @@ class BugFinder(App[None]):
 
     def on_mount(self) -> None:
         self.update_display()
-
+        self.set_interval(0.4, self._spawn_bug_tiles)
         self.set_interval(0.15, self._tick_enemies)
 
     def update_display(self) -> None:
@@ -229,6 +234,14 @@ class BugFinder(App[None]):
         # talked
         if self.npcs and self.npcs[0].talked and self.current_map_name == "init_room":
             self.game_map.set_tile(19, 5, "[green on green].[/]")
+        elif (
+            self.npcs
+            and len(self.npcs) > 1
+            and self.npcs[1].talked
+            and self.current_map_name == "room2"
+            and not self.bug_active
+        ):
+            self.bug_active = True
 
         if (
             self.player.x == 19
@@ -381,8 +394,7 @@ class BugFinder(App[None]):
     def _on_enemy_touch(self, enemy: Enemy) -> None:
         self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
         self.set_timer(1.5, self._clear_enemy_alert)
-        self.player.x = 1
-        self.player.y = 2
+        self._reset_player()
 
     def _clear_enemy_alert(self) -> None:
         self.enemy_alert = None
@@ -396,6 +408,45 @@ class BugFinder(App[None]):
             if enemy.x == x and enemy.y == y:
                 return True
         return False
+
+    def _spawn_bug_tiles(self) -> None:
+        if not self.bug_active or self.current_map_name != "room2":
+            return
+
+        import random
+
+        self.bug_spawn_count += 1
+
+        if self.bug_spawn_count < 5:
+            spawn_num = 1
+        elif self.bug_spawn_count < 15:
+            spawn_num = random.randint(1, 5)
+        else:
+            spawn_num = random.randint(5, 15)
+
+        for _ in range(spawn_num):
+            for _try in range(50):
+                x = random.randint(1, self.game_map.width - 2)
+                y = random.randint(1, self.game_map.height - 2)
+                if (
+                    self.game_map.is_walkable(x, y)
+                    and (x, y) not in self.bug_tiles
+                    and (x, y) != (self.player.x, self.player.y)
+                ):
+                    self.bug_tiles.append((x, y))
+                    self.game_map.set_tile(x, y, "[black on black]=[/]")
+                    break
+
+        if (self.player.x, self.player.y) in self.bug_tiles:
+            self.bug_active = False
+            self.enemy_alert = "[bold red]U̴̥̺̝̱̿n̴̖̻͋ͪ̎ͬͦ́̔ả̴̞̫̞̮ͭ̉ͮ̽̆ͬͤu̴͈̠̰͕̝ͭ͐̈̌̇t̵̵͈̣̱͆̓̄ͥ͊̓h̶̶̎̌̐̐͋͌̏ͮo̞̪̫̦͍̞ͅŕ͔͓̼͉͔̂͊i͍͉̭̜̮̬̳z̵͖̱̬̭͎̲͕̘ͣe̼͚͚͙͈̟̙ͦ͛ͪ̔ͬ͊d̲̻͖͉̝͔̺.̮͕͌͑ͧ̈ S̤̦̠͔͇͔͓͑̓ṱ̶͍̻̦̱ͭ̐̏̆̂͒a̶̶̟̳̺͖͙ͩ̇͗̂ͫṟ̵̝̜̺̳̣͖̎͆ͧͅţ̶̱͉͈̭̼̙ͩͅ c̯̤̹͈͎̒l̸͉̗͌ͤȩ͈͇͚͔͗̍ä̪̞̮͚r̵̹̪̪̹̘̀ͧ̔ͭ͂ͨ.̸̣̞͈ͦ̽̃͑.̵̶͔ͫ̀̉.̧̧̱͆̂ͦ͑̏̍̋[/]"
+            self.saver.save({})
+
+    def _reset_player(self) -> None:
+        self.player.x = 1
+        self.player.y = 2
+        self.enemy_alert = None
+        self.update_display()
 
 
 def main() -> None:
