@@ -36,6 +36,7 @@ class StartScene(App):
             yield Static("By Pidan", id="author")
             yield Static("", id="text")
             yield Button("Start Game", id="start")
+            yield Button("Background Story", id="background")
             yield Button("Clear Data", id="clear")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

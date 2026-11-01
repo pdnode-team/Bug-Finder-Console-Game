@@ -24,7 +24,7 @@ The demo has 3 levels plus an intro room and an end room.
 - [x] Add more kind enemy
 - [x] Automatic release in github
 - [ ] Status Bar <= skip this for now
-- [ ] Function Buttons <= I changed my mind. Change to 
+- [ ] Function Buttons <= I changed my mind. Change to pause game and reset
 - [x] Finish second level <= euh damn I forgot to mark finished
 - [ ] Finish third (boss) level
 - [ ] Add button to start UI for background story
