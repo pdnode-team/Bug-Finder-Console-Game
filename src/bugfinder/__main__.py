@@ -34,7 +34,7 @@ npcs: dict[str, list[Npc]] = {
             ],
         )
     ],
-    "room2": [
+    "level1": [
         Npc(
             "H",
             4,
@@ -60,7 +60,7 @@ npcs: dict[str, list[Npc]] = {
             ],
         ),
     ],
-    "room3": [
+    "level2": [
         Npc(
             "H",
             35,
@@ -77,7 +77,7 @@ npcs: dict[str, list[Npc]] = {
 }
 
 enemies: dict[str, list[Enemy]] = {
-    "room2": [
+    "level1": [
         Enemy("[bold red]E[/]", 35, 5),
         Enemy("[bold red]E[/]", 30, 8),
         Enemy("[bold red]E[/]", 10, 10),
@@ -85,7 +85,7 @@ enemies: dict[str, list[Enemy]] = {
         Enemy("[bold red]E[/]", 10, 16),
         Enemy("[bold red]E[/]", 30, 20),
     ],
-    "room3": [
+    "level2": [
         Enemy("[bold red]E[/]", 35, 5),
         Enemy("[bold red]E[/]", 30, 8),
         Enemy("[bold red]E[/]", 10, 10),
@@ -137,7 +137,7 @@ class BugFinder(App[None]):
                 "#..................#",
                 "####################",
             ],
-            "room2": [
+            "level1": [
                 "#####################################",
                 "#.......#...........................#",
                 "#.......#...........................#",
@@ -165,7 +165,7 @@ class BugFinder(App[None]):
                 "#...................................#",
                 "#####################################",
             ],
-            "room3": [
+            "level2": [
                 "#####################################",
                 "#...................................#",
                 "#--##################################",
@@ -275,7 +275,7 @@ class BugFinder(App[None]):
             near = any(n.is_adjacent(self.player.x, self.player.y) for n in self.npcs)
             if self.npcs and self.npcs[0].talked:
                 dialog.update("[dim]Go to the exit[/]")
-                if self.current_map_name == "room3":
+                if self.current_map_name == "level2":
                     self.game_map.set_tile(1, 2, "[green on green].[/]")
                     self.game_map.set_tile(2, 2, "[green on green].[/]")
             elif near:
@@ -290,7 +290,7 @@ class BugFinder(App[None]):
             self.npcs
             and len(self.npcs) > 1
             and self.npcs[1].talked
-            and self.current_map_name == "room2"
+            and self.current_map_name == "level1"
             and not self.bug_active
         ):
             self.bug_active = True
@@ -301,14 +301,14 @@ class BugFinder(App[None]):
             and self.player.y == 5
             and self.current_map_name == "init_room"
         ):
-            self.switch_to("room2", 1, 2)
+            self.switch_to("level1", 1, 2)
 
         elif (
             self.player.x == 19
             and self.player.y == 5
-            and self.current_map_name == "room2"
+            and self.current_map_name == "level1"
         ):
-            self.switch_to("room3", 1, 1)
+            self.switch_to("level2", 1, 1)
 
     def action_move_up(self) -> None:
         if not self._can_move():
@@ -472,7 +472,7 @@ class BugFinder(App[None]):
         return False
 
     def _spawn_bug_tiles(self) -> None:
-        if not self.bug_active or self.current_map_name != "room2":
+        if not self.bug_active or self.current_map_name != "level1":
             return
 
         import random
