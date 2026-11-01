@@ -27,7 +27,12 @@ The demo has 3 levels plus an intro room and an end room.
 - [x] Finish second level <= euh damn I forgot to mark finished
 - [ ] Finish third (boss) level
 - [x] Add button to start UI for background story
+- [x] Typing...
 
+## AI
+I used AI to check & debugging, some text look like AI because I used translator. 
+
+Some commits look weird because I'm second language learner, it may confused.
 
 ## Background Story
 You wake up, dazed, to find that you’ve been transported into a black-and-white console. You have a vague recollection of participating in Hack Club’s Terra project, but you have no idea how you ended up inside this unsightly console.
