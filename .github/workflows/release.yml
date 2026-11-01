@@ -39,12 +39,8 @@ jobs:
           pip install pyinstaller textual
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller --onefile \
-            --name ${{ matrix.artifact_name }} \
-            --hidden-import pyfiglet \
-            --collect-all pyfiglet \
-            src/bugfinder/__main__.py
+        run: pyinstaller --onefile --name ${{ matrix.artifact_name }} --hidden-import pyfiglet --collect-all pyfiglet src/bugfinder/__main__.py
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
