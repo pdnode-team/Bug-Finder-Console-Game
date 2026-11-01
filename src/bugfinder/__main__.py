@@ -86,6 +86,7 @@ npcs: dict[str, list[Npc]] = {
             ],
         ),
     ],
+    "level3": [],
 }
 
 enemies: dict[str, list[Enemy]] = {
@@ -112,6 +113,7 @@ enemies: dict[str, list[Enemy]] = {
         SlowEnemy("[bold yellow]S[/]", 30, 15, dy=2, dx=0),
         SlowEnemy("[bold yellow]S[/]", 35, 15, dy=2, dx=0),
     ],
+    "level3": [],
 }
 
 
@@ -212,6 +214,18 @@ class BugFinder(App[None]):
                 "#...................................#",
                 "#####################################",
             ],
+            "level3": [
+                "######################",
+                "#....................#",
+                "#....................#",
+                "#....................#",
+                "#....................#",
+                "#....................#",
+                "#....................#",
+                "#....................#",
+                "#....................#",
+                "######################",
+            ],
         }
         self.current_map_name = "init_room"
         self.game_map = GameMap(self.maps[self.current_map_name])
@@ -246,6 +260,7 @@ class BugFinder(App[None]):
         self.bug_active = False
         self.bug_spawn_interval = 1.2
         self.bug_spawn_count = 0
+        self.bug_timer = None
 
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown
@@ -264,7 +279,7 @@ class BugFinder(App[None]):
 
     def on_mount(self) -> None:
         self.update_display()
-        self.set_interval(0.4, self._spawn_bug_tiles)
+        self.bug_timer = self.set_interval(0.4, self._spawn_bug_tiles)
         self.set_interval(0.15, self._tick_enemies)
 
     def update_display(self) -> None:
@@ -309,11 +324,17 @@ class BugFinder(App[None]):
             self.npcs
             and len(self.npcs) > 1
             and self.npcs[1].talked
-            and self.current_map_name == "level1"
             and not self.bug_active
+            and self.current_map_name in ("level1", "level2")
         ):
             self.bug_active = True
-            self.game_map.set_tile(19, 5, "[green on green].[/]")
+            if self.current_map_name == "level1":
+                self.game_map.set_tile(19, 5, "[green on green].[/]")
+            elif self.current_map_name == "level2":
+                if self.bug_timer:
+                    self.bug_timer.stop()
+                self.bug_timer = self.set_interval(1.0, self._spawn_bug_tiles)
+                self.game_map.set_tile(8, 17, "[green on green].[/]")
 
         if (
             self.player.x == 19
@@ -328,6 +349,13 @@ class BugFinder(App[None]):
             and self.current_map_name == "level1"
         ):
             self.switch_to("level2", 1, 1)
+
+        elif (
+            self.player.x == 8
+            and self.player.y == 17
+            and self.current_map_name == "level2"
+        ):
+            self.switch_to("level3", 1, 1)
 
     def action_move_up(self) -> None:
         if not self._can_move():
@@ -437,6 +465,14 @@ class BugFinder(App[None]):
             self.player.y = player_y
             self.talking_to = None
 
+            # 重置 bug 状态
+            self.bug_active = False
+            self.bug_tiles.clear()
+            self.bug_spawn_count = 0
+            if self.bug_timer:
+                self.bug_timer.stop()
+                self.bug_timer = None
+
             self.saver.save(
                 {
                     "room": map_name,
@@ -451,7 +487,6 @@ class BugFinder(App[None]):
             self.update_display()
         else:
             self.enemies = []
-
             self.update_display()
 
     def _tick_enemies(self) -> None:
@@ -501,7 +536,7 @@ class BugFinder(App[None]):
         return False
 
     def _spawn_bug_tiles(self) -> None:
-        if not self.bug_active or self.current_map_name != "level1":
+        if not self.bug_active:
             return
 
         import random
