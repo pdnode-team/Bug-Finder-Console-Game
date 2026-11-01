@@ -9,11 +9,10 @@ from textual.widgets import Static
 
 from bugfinder.enemy import Enemy, SlowEnemy
 from bugfinder.gamesave import GameSave
+from bugfinder.map import GameMap
+from bugfinder.npc import Choice, Npc
+from bugfinder.player import Player
 from bugfinder.start_ui import StartScene
-
-from .map import GameMap
-from .npc import Choice, Npc
-from .player import Player
 
 npcs: dict[str, list[Npc]] = {
     "init_room": [
