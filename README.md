@@ -22,11 +22,12 @@ The demo has 3 levels plus an intro room and an end room.
     - [x] Finish C
 - [x] Finish second level
 - [x] Add more kind enemy
-- [ ] Automatic release in github
-- [ ] Status Bar
-- [ ] Function Buttons
-- [ ] Finish second level
+- [x] Automatic release in github
+- [ ] Status Bar <= skip this for now
+- [ ] Function Buttons <= I changed my mind. Change to 
+- [x] Finish second level <= euh damn I forgot to mark finished
 - [ ] Finish third (boss) level
+- [ ] Add button to start UI for background story
 
 
 ## Background Story
