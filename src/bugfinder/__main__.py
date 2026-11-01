@@ -60,10 +60,32 @@ npcs: dict[str, list[Npc]] = {
             ],
         ),
     ],
+    "room3": [
+        Npc(
+            "H",
+            35,
+            1,
+            [
+                "Nice!!!",
+                "This time, you have a new enemy to focus on",
+                '[yellow]"S"[/], it moves really fast, but it won\'t hit you, it will slow you down',
+                "Keep going! (Go back! The start wall is unlocked!)",
+            ],
+            choices=[Choice("May I ask who you are?", "Let's not talk about that.")],
+        ),
+    ],
 }
 
 enemies: dict[str, list[Enemy]] = {
     "room2": [
+        Enemy("[bold red]E[/]", 35, 5),
+        Enemy("[bold red]E[/]", 30, 8),
+        Enemy("[bold red]E[/]", 10, 10),
+        Enemy("[bold red]E[/]", 30, 13),
+        Enemy("[bold red]E[/]", 10, 16),
+        Enemy("[bold red]E[/]", 30, 20),
+    ],
+    "room3": [
         Enemy("[bold red]E[/]", 35, 5),
         Enemy("[bold red]E[/]", 30, 8),
         Enemy("[bold red]E[/]", 10, 10),
@@ -143,6 +165,34 @@ class BugFinder(App[None]):
                 "#...................................#",
                 "#####################################",
             ],
+            "room3": [
+                "#####################################",
+                "#...................................#",
+                "#--##################################",
+                "#..#........................#.......#",
+                "#.......#......##......#............#",
+                "#..#...........##...........#.......#",
+                "#############################.......#",
+                "#...................................#",
+                "#..........####.....................#",
+                "#...................................#",
+                "#....................################",
+                "###############...........#.........#",
+                "#.........................#.........#",
+                "#......####################.........#",
+                "#..............#....................#",
+                "#...######.....#....................#",
+                "#........#.....#.....####...........#",
+                "#........#.....#.....#..............#",
+                "#...######.....#.....#..............#",
+                "#..............#.....################",
+                "#..............#....................#",
+                "#..............#....................#",
+                "#...................................#",
+                "#...................................#",
+                "#...................................#",
+                "#####################################",
+            ],
         }
         self.current_map_name = "init_room"
         self.game_map = GameMap(self.maps[self.current_map_name])
@@ -170,9 +220,8 @@ class BugFinder(App[None]):
                 self.game_map = GameMap(self.maps[room])
                 self.player = Player(px, py)
 
-                if room == "room2":
-                    self.npcs = npcs["room2"]
-                    self.enemies = enemies["room2"]
+                self.npcs = npcs.get(room, [])
+                self.enemies = enemies.get(room, [])
 
         self.bug_tiles: list[tuple[int, int]] = []
         self.bug_active = False
@@ -226,6 +275,9 @@ class BugFinder(App[None]):
             near = any(n.is_adjacent(self.player.x, self.player.y) for n in self.npcs)
             if self.npcs and self.npcs[0].talked:
                 dialog.update("[dim]Go to the exit[/]")
+                if self.current_map_name == "room3":
+                    self.game_map.set_tile(1, 2, "[green on green].[/]")
+                    self.game_map.set_tile(2, 2, "[green on green].[/]")
             elif near:
                 dialog.update("[dim]Press E to talk[/]")
             else:
@@ -242,6 +294,7 @@ class BugFinder(App[None]):
             and not self.bug_active
         ):
             self.bug_active = True
+            self.game_map.set_tile(19, 5, "[green on green].[/]")
 
         if (
             self.player.x == 19
@@ -249,6 +302,13 @@ class BugFinder(App[None]):
             and self.current_map_name == "init_room"
         ):
             self.switch_to("room2", 1, 2)
+
+        elif (
+            self.player.x == 19
+            and self.player.y == 5
+            and self.current_map_name == "room2"
+        ):
+            self.switch_to("room3", 1, 1)
 
     def action_move_up(self) -> None:
         if not self._can_move():
@@ -368,6 +428,8 @@ class BugFinder(App[None]):
 
             self.npcs = npcs[map_name]
             self.enemies = enemies[map_name]
+
+            self.update_display()
         else:
             self.enemies = []
 
@@ -439,7 +501,7 @@ class BugFinder(App[None]):
 
         if (self.player.x, self.player.y) in self.bug_tiles:
             self.bug_active = False
-            self.enemy_alert = "[bold red]U̴̥̺̝̱̿n̴̖̻͋ͪ̎ͬͦ́̔ả̴̞̫̞̮ͭ̉ͮ̽̆ͬͤu̴͈̠̰͕̝ͭ͐̈̌̇t̵̵͈̣̱͆̓̄ͥ͊̓h̶̶̎̌̐̐͋͌̏ͮo̞̪̫̦͍̞ͅŕ͔͓̼͉͔̂͊i͍͉̭̜̮̬̳z̵͖̱̬̭͎̲͕̘ͣe̼͚͚͙͈̟̙ͦ͛ͪ̔ͬ͊d̲̻͖͉̝͔̺.̮͕͌͑ͧ̈ S̤̦̠͔͇͔͓͑̓ṱ̶͍̻̦̱ͭ̐̏̆̂͒a̶̶̟̳̺͖͙ͩ̇͗̂ͫṟ̵̝̜̺̳̣͖̎͆ͧͅţ̶̱͉͈̭̼̙ͩͅ c̯̤̹͈͎̒l̸͉̗͌ͤȩ͈͇͚͔͗̍ä̪̞̮͚r̵̹̪̪̹̘̀ͧ̔ͭ͂ͨ.̸̣̞͈ͦ̽̃͑.̵̶͔ͫ̀̉.̧̧̱͆̂ͦ͑̏̍̋[/]"
+            self.enemy_alert = "[bold red]U̴̥̺̝̱̿n̴̖̻͋ͪ̎ͬͦ́̔ả̴̞̫̞̮ͭ̉ͮ̽̆ͬͤu̴͈̠̰͕̝ͭ͐̈̌̇t̵̵͈̣̱͆̓̄ͥ͊̓h̶̶̎̌̐̐͋͌̏ͮo̞̪̫̦͍̞ͅŕ͔͓̼͉͔̂͊i͍͉̭̜̮̬̳z̵͖̱̬̭͎̲͕̘ͣe̼͚͚͙͈̟̙ͦ͛ͪ̔ͬ͊d̲̻͖͉̝͔̺.̮͕͌͑ͧ̈ S̤̦̠͔͇͔͓͑̓ṱ̶͍̻̦̱ͭ̐̏̆̂͒a̶̶̟̳̺͖͙ͩ̇͗̂ͫṟ̵̝̜̺̳̣͖̎͆ͧͅţ̶̱͉͈̭̼̙ͩͅ c̯̤̹͈͎̒l̸͉̗͌ͤȩ͈͇͚͔͗̍ä̪̞̮͚r̵̹̪̪̹̘̀ͧ̔ͭ͂ͨ.̸̣̞͈ͦ̽̃͑.̵̶͔ͫ̀̉.̧̧̱͆̂ͦ͑̏̍̋[/]\nPlease restart the game to start over"
             self.saver.save({})
 
     def _reset_player(self) -> None:
