@@ -138,6 +138,7 @@ class BugFinder(App[None]):
         Binding("space", "continue_dialog"),
         Binding("1", "choose_1"),
         Binding("2", "choose_2"),
+        Binding("p", "pause", "Pause"),
     ]
 
     def __init__(self) -> None:
@@ -261,8 +262,10 @@ class BugFinder(App[None]):
         self.bug_spawn_count = 0
         self.bug_timer = None
 
+        self.paused = False
+
     def _can_move(self) -> bool:
-        return self.talking_to is None and not self.move_cooldown
+        return self.talking_to is None and not self.move_cooldown and not self.paused
 
     def _start_cooldown(self) -> None:
         self.move_cooldown = True
@@ -276,12 +279,23 @@ class BugFinder(App[None]):
             yield Static(id="map")
             yield Static(id="dialog")
 
+    def action_pause(self) -> None:
+        self.paused = not self.paused
+        dialog = self.query_one("#dialog", Static)
+        if self.paused:
+            dialog.update("[yellow]Paused - Press P to resume[/]")
+        else:
+            self.update_display()
+
     def on_mount(self) -> None:
         self.update_display()
         self.bug_timer = self.set_interval(0.4, self._spawn_bug_tiles)
         self.set_interval(0.15, self._tick_enemies)
 
     def update_display(self) -> None:
+        if self.paused:
+            self.query_one("#dialog", Static).update("[yellow]Paused[/]")
+            return
         entities = self.npcs + self.enemies
         map_text = self.game_map.render(self.player.x, self.player.y, entities)
         self.query_one("#map", Static).update(map_text)
@@ -357,6 +371,8 @@ class BugFinder(App[None]):
             self.switch_to("level3", 1, 1)
 
     def action_move_up(self) -> None:
+        if self.paused:
+            return
         if not self._can_move():
             return
         new_x = self.player.x
@@ -370,6 +386,8 @@ class BugFinder(App[None]):
             self._check_enemy_collision()
 
     def action_move_down(self) -> None:
+        if self.paused:
+            return
         if not self._can_move():
             return
         new_x = self.player.x
@@ -383,6 +401,8 @@ class BugFinder(App[None]):
             self._check_enemy_collision()
 
     def action_move_left(self) -> None:
+        if self.paused:
+            return
         if not self._can_move():
             return
         new_x = self.player.x - 1
@@ -396,6 +416,8 @@ class BugFinder(App[None]):
             self._check_enemy_collision()
 
     def action_move_right(self) -> None:
+        if self.paused:
+            return
         if not self._can_move():
             return
         new_x = self.player.x + 1
@@ -409,6 +431,8 @@ class BugFinder(App[None]):
             self._check_enemy_collision()
 
     def action_talk(self) -> None:
+        if self.paused:
+            return
         if self.talking_to is not None:
             return
         for i, npc in enumerate(self.npcs):
@@ -420,6 +444,8 @@ class BugFinder(App[None]):
                 return
 
     def action_continue_dialog(self) -> None:
+        if self.paused:
+            return
         if self.talking_to is None:
             return
         npc = self.npcs[self.talking_to]
@@ -489,6 +515,8 @@ class BugFinder(App[None]):
             self.update_display()
 
     def _tick_enemies(self) -> None:
+        if self.paused:
+            return
         if self.talking_to is not None or self.enemy_alert:
             return
         self._check_enemy_collision()
@@ -535,7 +563,7 @@ class BugFinder(App[None]):
         return False
 
     def _spawn_bug_tiles(self) -> None:
-        if not self.bug_active:
+        if not self.bug_active or self.paused:
             return
 
         import random

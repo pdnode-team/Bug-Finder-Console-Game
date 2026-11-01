@@ -26,7 +26,6 @@ class Enemy:
             self.x = new_x
             self.y = new_y
         else:
-            # 碰到墙，方向取反
             self.dx = -self.dx
             self.dy = -self.dy
 
