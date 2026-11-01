@@ -8,7 +8,8 @@ So this is my first time using Python to create a CLI game; my original plan was
 - [x] Finish first level
     - [x] More enemy
     - [x] Finish C
-- [ ] Add more kind enemy
+- [x] Finish second level
+- [x] Add more kind enemy
 - [ ] Automatic release in github
 - [ ] Status Bar
 - [ ] Function Buttons
