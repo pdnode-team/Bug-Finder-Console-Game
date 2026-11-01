@@ -4,6 +4,8 @@ So this is my first time using Python to create a CLI game; my original plan was
 
 ## How to play?
 So, you need to download the executable file from the GitHub Release. Then run it!
+> Or using uv pip: `pip install bugfinder==1.0.6` then `uv run python -m bugfinder`
+
 
 - WASD to move
 - E to Talk
