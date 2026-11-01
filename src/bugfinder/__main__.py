@@ -7,7 +7,7 @@ from textual.binding import Binding
 from textual.containers import Vertical
 from textual.widgets import Static
 
-from bugfinder.enemy import Enemy
+from bugfinder.enemy import Enemy, SlowEnemy
 from bugfinder.gamesave import GameSave
 from bugfinder.start_ui import StartScene
 
@@ -73,6 +73,18 @@ npcs: dict[str, list[Npc]] = {
             ],
             choices=[Choice("May I ask who you are?", "Let's not talk about that.")],
         ),
+        Npc(
+            "[green]C[/]",
+            22,
+            18,
+            ["Console: .....Loading.....", "terra@bugfinder:~$ █"],
+            choices=[
+                Choice(
+                    "sudo rm -rf /*",
+                    "terra@bugfinder:~$ sudo rm -rf /*\n[red]System: I hope you are always that lucky[/]",  # So old-fashion
+                )
+            ],
+        ),
     ],
 }
 
@@ -86,12 +98,19 @@ enemies: dict[str, list[Enemy]] = {
         Enemy("[bold red]E[/]", 30, 20),
     ],
     "level2": [
-        Enemy("[bold red]E[/]", 35, 5),
+        Enemy("[bold red]E[/]", 35, 5, dx=-1),
         Enemy("[bold red]E[/]", 30, 8),
-        Enemy("[bold red]E[/]", 10, 10),
+        Enemy("[bold red]E[/]", 10, 10, dx=-1),
         Enemy("[bold red]E[/]", 30, 13),
-        Enemy("[bold red]E[/]", 10, 16),
+        Enemy("[bold red]E[/]", 10, 16, dx=-1),
         Enemy("[bold red]E[/]", 30, 20),
+        Enemy("[bold red]E[/]", 4, 3, dx=-1),
+        Enemy("[bold red]E[/]", 4, 5),
+        SlowEnemy("[bold yellow]S[/]", 3, 20, dy=2, dx=0),
+        SlowEnemy("[bold yellow]S[/]", 3, 3, dy=0, dx=2),
+        SlowEnemy("[bold yellow]S[/]", 3, 20, dy=0, dx=2),
+        SlowEnemy("[bold yellow]S[/]", 30, 15, dy=2, dx=0),
+        SlowEnemy("[bold yellow]S[/]", 35, 15, dy=2, dx=0),
     ],
 }
 
@@ -182,7 +201,7 @@ class BugFinder(App[None]):
                 "#......####################.........#",
                 "#..............#....................#",
                 "#...######.....#....................#",
-                "#........#.....#.....####...........#",
+                "#........#.....#.....############...#",
                 "#........#.....#.....#..............#",
                 "#...######.....#.....#..............#",
                 "#..............#.....################",
@@ -454,9 +473,19 @@ class BugFinder(App[None]):
                 break
 
     def _on_enemy_touch(self, enemy: Enemy) -> None:
-        self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
-        self.set_timer(1.5, self._clear_enemy_alert)
-        self._reset_player()
+        if isinstance(enemy, SlowEnemy):
+            self.move_delay = 0.3
+            self.enemy_alert = "[yellow]Slowed down![/]"
+            self.set_timer(2.0, self._clear_slow)
+        else:
+            self.enemy_alert = "Firewall: [bold red]Unauthorized Action![/]"
+            self.set_timer(1.5, self._clear_enemy_alert)
+            self._reset_player()
+
+    def _clear_slow(self) -> None:
+        self.move_delay = 0.06
+        self.enemy_alert = None
+        self.update_display()
 
     def _clear_enemy_alert(self) -> None:
         self.enemy_alert = None
