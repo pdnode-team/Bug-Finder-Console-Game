@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import ClassVar
 
 from textual.app import App, ComposeResult
@@ -264,6 +265,33 @@ class BugFinder(App[None]):
 
         self.paused = False
 
+        self.typewriter_timer = None
+        self.typewriter_text = ""
+        self.typewriter_index = 0
+        self.typewriter_suffix = ""
+
+    def _start_typewriter(self, text: str, suffix: str = "") -> None:
+        TAG_RE = re.compile(r"\[/?[^\]]+\]")
+        if self.typewriter_timer:
+            self.typewriter_timer.stop()
+        self.typewriter_raw = text
+        self.typewriter_plain = TAG_RE.sub("", text)
+        self.typewriter_index = 0
+        self.typewriter_suffix = suffix
+        self.typewriter_timer = self.set_interval(0.03, self._typewriter_tick)
+
+    def _typewriter_tick(self) -> None:
+        dialog = self.query_one("#dialog", Static)
+        if self.typewriter_index < len(self.typewriter_plain):
+            self.typewriter_index += 1
+            shown = self.typewriter_plain[: self.typewriter_index]
+            dialog.update(shown + self.typewriter_suffix)
+        else:
+            if self.typewriter_timer:
+                self.typewriter_timer.stop()
+                self.typewriter_timer = None
+            dialog.update(self.typewriter_raw + self.typewriter_suffix)
+
     def _can_move(self) -> bool:
         return self.talking_to is None and not self.move_cooldown and not self.paused
 
@@ -309,7 +337,9 @@ class BugFinder(App[None]):
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
             if self.talk_phase == TalkPhase.LINES:
-                dialog.update(f"{npc.current_line()}\n\n[dim]Space to continue[/]")
+                self._start_typewriter(
+                    npc.current_line(), "\n\n[dim]Space to continue[/]"
+                )
             elif self.talk_phase == TalkPhase.CHOOSING:
                 text = "Choose:\n" + "\n".join(
                     f"{i + 1}. {c.label}" for i, c in enumerate(npc.choices)
@@ -317,7 +347,7 @@ class BugFinder(App[None]):
                 dialog.update(text)
             elif self.talk_phase == TalkPhase.REPLY:
                 reply = npc.choices[self.reply_index].reply if npc.choices else ""
-                dialog.update(f"{reply}\n\n[dim]Space to close[/]")
+                self._start_typewriter(reply, "\n\n[dim]Space to close[/]")
         else:
             near = any(n.is_adjacent(self.player.x, self.player.y) for n in self.npcs)
             if self.npcs and self.npcs[0].talked:
@@ -449,6 +479,13 @@ class BugFinder(App[None]):
         if self.talking_to is None:
             return
         npc = self.npcs[self.talking_to]
+
+        if self.typewriter_timer:
+            self.typewriter_timer.stop()
+            self.typewriter_timer = None
+            dialog = self.query_one("#dialog", Static)
+            dialog.update(self.typewriter_text + self.typewriter_suffix)
+            return
 
         if self.talk_phase == TalkPhase.LINES:
             if not npc.advance():

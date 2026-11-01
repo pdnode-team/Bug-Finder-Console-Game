@@ -23,7 +23,6 @@ The demo has 3 levels plus an intro room and an end room.
 - [x] Finish second level
 - [x] Add more kind enemy
 - [x] Automatic release in github
-- [ ] Status Bar <= skip this for now
 - [x] Pause
 - [x] Finish second level <= euh damn I forgot to mark finished
 - [ ] Finish third (boss) level
