@@ -86,7 +86,37 @@ npcs: dict[str, list[Npc]] = {
             ],
         ),
     ],
-    "level3": [],
+    "level3": [
+        Npc(
+            "H",
+            14,
+            4,
+            [
+                "Unbelievable!",
+                "This time, you also have a new enemy to focus on",
+                '[yellow]"C"[/], it moves to you! please be careful!',
+                "Go!",
+            ],
+            choices=[
+                Choice(
+                    "May I ask who you are?",
+                    "I will tell you if you can pass this level, good luck.",
+                )
+            ],
+        ),
+        Npc(
+            "[green]C[/]",
+            17,
+            1,
+            ["Console: .....Loading.....", "terra@bugfinder:~$ █"],
+            choices=[
+                Choice(
+                    "sudo rm -rf /*",
+                    "terra@bugfinder:~$ sudo rm -rf /*\n[red]You won't have any chance to do same in next room[/]",
+                )
+            ],
+        ),
+    ],
 }
 
 enemies: dict[str, list[Enemy]] = {
@@ -123,7 +153,6 @@ enemies: dict[str, list[Enemy]] = {
         Enemy("[bold red]E[/]", 32, 10, dy=0, dx=-1),
         Enemy("[bold red]E[/]", 30, 20, dy=-1, dx=0),
         ChaserEnemy("[bold magenta]C[/]", 18, 20),
-        ChaserEnemy("[bold magenta]C[/]", 10, 25),
         Enemy("[bold red]E[/]", 15, 28, dx=2),
         SlowEnemy("[bold yellow]S[/]", 25, 26, dx=-2, dy=0),
         Enemy("[bold red]B[/]", 17, 22),
