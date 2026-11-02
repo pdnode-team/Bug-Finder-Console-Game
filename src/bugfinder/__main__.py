@@ -144,8 +144,8 @@ enemies: dict[str, list[Enemy]] = {
         SlowEnemy("[bold yellow]S[/]", 35, 15, dy=2, dx=0),
     ],
     "level3": [
-        Enemy("[bold red]E[/]", 2, 5, dy=1, dx=0),
-        Enemy("[bold red]E[/]", 2, 15, dy=-1, dx=0),
+        Enemy("[bold red]E[/]", 3, 5, dy=1, dx=0),
+        Enemy("[bold red]E[/]", 3, 15, dy=-1, dx=0),
         Enemy("[bold red]E[/]", 10, 3, dx=1),
         Enemy("[bold red]E[/]", 22, 4, dx=-2),
         SlowEnemy("[bold yellow]S[/]", 20, 7, dx=2, dy=0),
@@ -196,7 +196,7 @@ class BugFinder(App[None]):
                 "#..................#",
                 "#..................#",
                 "#..................#",
-                "#...........H......#",
+                "#..................#",
                 "#..................#",
                 "#..................#",
                 "#..................#",
@@ -289,6 +289,18 @@ class BugFinder(App[None]):
                 "#.....##########################....#",
                 "#...................................#",
                 "#####################################",
+            ],
+            "end": [
+                "####################",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "#..................#",
+                "####################",
             ],
         }
         self.current_map_name = "init_room"
@@ -430,7 +442,7 @@ class BugFinder(App[None]):
             and len(self.npcs) > 1
             and self.npcs[1].talked
             and not self.bug_active
-            and self.current_map_name in ("level1", "level2")
+            and self.current_map_name in ("level1", "level2", "level3")
         ):
             self.bug_active = True
             if self.current_map_name == "level1":
@@ -440,6 +452,11 @@ class BugFinder(App[None]):
                     self.bug_timer.stop()
                 self.bug_timer = self.set_interval(1.0, self._spawn_bug_tiles)
                 self.game_map.set_tile(8, 17, "[green on green].[/]")
+            elif self.current_map_name == "level3":
+                if self.bug_timer:
+                    self.bug_timer.stop()
+                self.bug_timer = self.set_interval(1.0, self._spawn_bug_tiles)
+                self.game_map.set_tile(17, 25, "[green on green].[/]")
 
         if (
             self.player.x == 19
@@ -461,6 +478,13 @@ class BugFinder(App[None]):
             and self.current_map_name == "level2"
         ):
             self.switch_to("level3", 1, 1)
+
+        elif (
+            self.player.x == 17
+            and self.player.y == 25
+            and self.current_map_name == "level3"
+        ):
+            self.switch_to("end", 1, 1)
 
     def action_move_up(self) -> None:
         if self.paused:
