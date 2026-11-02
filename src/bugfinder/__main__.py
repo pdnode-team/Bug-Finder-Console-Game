@@ -400,17 +400,16 @@ class BugFinder(App[None]):
         if self.talking_to is not None:
             npc = self.npcs[self.talking_to]
             if self.talk_phase == TalkPhase.LINES:
-                self._start_typewriter(
-                    npc.current_line(), "\n\n[dim]Space to continue[/]"
-                )
+                if not self.typewriter_timer:
+                    dialog.update(f"{npc.current_line()}\n\n[dim]Space to continue[/]")
             elif self.talk_phase == TalkPhase.CHOOSING:
                 text = "Choose:\n" + "\n".join(
                     f"{i + 1}. {c.label}" for i, c in enumerate(npc.choices)
                 )
                 dialog.update(text)
-            elif self.talk_phase == TalkPhase.REPLY:
+            elif self.talk_phase == TalkPhase.REPLY and not self.typewriter_timer:
                 reply = npc.choices[self.reply_index].reply if npc.choices else ""
-                self._start_typewriter(reply, "\n\n[dim]Space to close[/]")
+                dialog.update(f"{reply}\n\n[dim]Space to close[/]")
         else:
             near = any(n.is_adjacent(self.player.x, self.player.y) for n in self.npcs)
             if self.npcs and self.npcs[0].talked:
@@ -524,31 +523,30 @@ class BugFinder(App[None]):
             self._check_enemy_collision()
 
     def action_talk(self) -> None:
-        if self.paused:
-            return
-        if self.talking_to is not None:
+        if self.paused or self.talking_to is not None:
             return
         for i, npc in enumerate(self.npcs):
             if npc.is_adjacent(self.player.x, self.player.y):
                 self.talking_to = i
                 npc.reset()
                 self.talk_phase = TalkPhase.LINES
-                self.update_display()
+                self._start_typewriter(
+                    npc.current_line(), "\n\n[dim]Space to continue[/]"
+                )
                 return
 
     def action_continue_dialog(self) -> None:
-        if self.paused:
+        if self.paused or self.talking_to is None:
             return
-        if self.talking_to is None:
-            return
-        npc = self.npcs[self.talking_to]
 
         if self.typewriter_timer:
             self.typewriter_timer.stop()
             self.typewriter_timer = None
             dialog = self.query_one("#dialog", Static)
-            dialog.update(self.typewriter_text + self.typewriter_suffix)
+            dialog.update(self.typewriter_raw + self.typewriter_suffix)
             return
+
+        npc = self.npcs[self.talking_to]
 
         if self.talk_phase == TalkPhase.LINES:
             if not npc.advance():
@@ -557,6 +555,11 @@ class BugFinder(App[None]):
                 else:
                     npc.talked = True
                     self.talking_to = None
+            else:
+                self._start_typewriter(
+                    npc.current_line(), "\n\n[dim]Space to continue[/]"
+                )
+                return
         elif self.talk_phase == TalkPhase.REPLY:
             npc.talked = True
             self.talking_to = None
