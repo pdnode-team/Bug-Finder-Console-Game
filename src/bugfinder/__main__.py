@@ -124,10 +124,9 @@ enemies: dict[str, list[Enemy]] = {
         Enemy("[bold red]E[/]", 30, 20, dy=-1, dx=0),
         ChaserEnemy("[bold magenta]C[/]", 18, 20),
         ChaserEnemy("[bold magenta]C[/]", 10, 25),
-        Enemy("[bold red]E[/]", 15, 27, dx=2),
+        Enemy("[bold red]E[/]", 15, 28, dx=2),
         SlowEnemy("[bold yellow]S[/]", 25, 26, dx=-2, dy=0),
-        Enemy("[bold red]B[/]", 17, 19),
-        Enemy("[bold red]B[/]", 17, 17),
+        Enemy("[bold red]B[/]", 17, 22),
     ],
 }
 
