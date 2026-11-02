@@ -57,3 +57,24 @@ class SlowEnemy(Enemy):
         if not moved:
             self.dx = -self.dx
             self.dy = -self.dy
+
+
+# Wohha! Another new enemy
+class ChaserEnemy(Enemy):
+    def __init__(self, symbol: str, x: int, y: int) -> None:
+        super().__init__(symbol, x, y)
+        self.player_x = 0
+        self.player_y = 0
+
+    def update_player_pos(self, px: int, py: int) -> None:
+        self.player_x = px
+        self.player_y = py
+
+    def try_move(self, game_map: GameMap) -> None:
+        dx = 1 if self.player_x > self.x else (-1 if self.player_x < self.x else 0)
+        dy = 1 if self.player_y > self.y else (-1 if self.player_y < self.y else 0)
+
+        if game_map.is_walkable(self.x + dx, self.y):
+            self.x += dx
+        elif game_map.is_walkable(self.x, self.y + dy):
+            self.y += dy
