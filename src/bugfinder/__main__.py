@@ -117,6 +117,27 @@ npcs: dict[str, list[Npc]] = {
             ],
         ),
     ],
+    "end": [
+        Npc(
+            "D",
+            12,
+            5,
+            [
+                "Hello!",
+                "Congratulations! You finished all level that I made!",
+                "I know you have a lot of questions, but I choose to not answer these.",
+                "But if you think you already escape...",
+                "Then you wrong",
+                "Haha, just kidding",
+                "I know you may think this game is boring. I understand, but I'm not a good game develop and design and this game only cost 12 hours",
+                "Anyway, Congratulations!",
+            ],
+            choices=[
+                Choice("Who is ███?", "I don't know, I actually don't know."),
+                Choice("Who are you?", "I'm the developer!"),
+            ],
+        )
+    ],
 }
 
 enemies: dict[str, list[Enemy]] = {
@@ -157,6 +178,7 @@ enemies: dict[str, list[Enemy]] = {
         SlowEnemy("[bold yellow]S[/]", 25, 26, dx=-2, dy=0),
         Enemy("[bold red]B[/]", 17, 22),
     ],
+    "end": [],
 }
 
 
@@ -429,6 +451,8 @@ class BugFinder(App[None]):
                 if self.current_map_name == "level2":
                     self.game_map.set_tile(1, 2, "[green on green].[/]")
                     self.game_map.set_tile(2, 2, "[green on green].[/]")
+            elif self.current_map_name == "end":
+                dialog.update("Congratulations! You can exit the game!")
             elif near:
                 dialog.update("[dim]Press E to talk[/]")
             else:
